@@ -1,17 +1,25 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <!-- <img alt="Vue logo" src="./assets/logo.png">
+  <HelloWorld msg="Welcome to Your Vue.js App"/> -->
+  <div>
+    <router-view/>
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
+// import { inject } from 'vue'
+// import HelloWorld from './components/HelloWorld.vue'
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
+  // components: {
+  //   HelloWorld
+  // },
+  setup () {
+    // const fb = inject('fb')
+    // console.log(fb)
+    return
   }
 }
+
 </script>
 
 <style>

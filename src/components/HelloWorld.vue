@@ -1,4 +1,5 @@
 <template>
+  <button @click="isNotify = true">showNotify</button>
   <div class="hello">
     <h1>{{ msg }}</h1>
     <p>
@@ -28,13 +29,24 @@
       <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
     </ul>
   </div>
+  <NotificationVue v-model:show="isNotify" :title="'тестовое уведомление'">Тестовый текст</NotificationVue>
 </template>
 
 <script>
+import NotificationVue from './NotificationVue.vue';
+
 export default {
   name: 'HelloWorld',
+  components: {
+    NotificationVue
+  },
   props: {
     msg: String
+  },
+  data: () => ({
+    isNotify: false
+  }),
+  methods: {
   }
 }
 </script>
