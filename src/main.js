@@ -1,6 +1,11 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import vuetify from './plugins/vuetify'
+import { loadFonts } from './plugins/webfontloader'
+import store from './store'
+
+loadFonts()
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
@@ -24,4 +29,6 @@ const app = createApp(App)
 app.provide('fbApp', fireBaseApp)
 // console.log(router)
 app.use(router)
+app.use(vuetify)
+app.use(store)
 app.mount('#app')
