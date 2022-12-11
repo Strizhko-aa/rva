@@ -1,57 +1,64 @@
 <template>
-  <h3>Вход</h3>
-  <v-form>
-    <v-container>
-      <v-row>
-        <v-col
-          cols="12"
-          md="4"
-        >
-          <v-text-field
-            v-model="phone"
-            :counter="10"
-            label="phone"
-            placeholder="+7(999)999-99-99"
-            required
-          ></v-text-field>
-        </v-col>
-      </v-row>
+  <div class="login-form">
+    <v-card variant="tonal" width="100%" max-width="350px">
+      <v-card-title>Вход</v-card-title>
+      <v-card-text>
+        <v-tabs fixed-tabs v-model="loginType">
+          <!-- <v-tabs-slider color="yellow"></v-tabs-slider> -->
+          <v-tab value="email">email</v-tab>
+          <v-tab value="phone">phone</v-tab>
+        </v-tabs>
 
-      <v-row>
-        <v-col
-          cols="12"
-          md="4"
-        >
-          <v-text-field
-            v-model="password"
-            label="password"
-            type="password"
-            required
-          ></v-text-field>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <!-- <v-btn @click="loginWithEmail" color="primary" class="sign-in-button">Войти</v-btn> -->
-          <v-btn @click="loginWithPhone" color="primary" class="sign-in-button">Войти</v-btn>
-          <v-btn @click="loginWithGoogle" icon color="red" class="ml-2" size="36"><v-icon>mdi-google</v-icon></v-btn>
-        </v-col>
-        <v-col>
-          <v-btn to="/registration" flat>регистрация</v-btn>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-alert class="mt-5" v-if="isFailLogin" color="error">Не удалось залогиниться😭</v-alert>
-      </v-row>
-    </v-container>
-  </v-form>
+        <v-window class="mt-5" v-model="loginType">
+          <v-window-item value="email">
+            <v-text-field
+              v-model="email"
+              label="email"
+              placeholder="example@mail.com"
+              required
+              @keyup.enter="login"
+            ></v-text-field>
+      
+            <v-text-field
+              v-model="password"
+              label="password"
+              type="password"
+              required
+              @keyup.enter="login"
+            ></v-text-field>
+          </v-window-item>
+
+          <v-window-item value="phone">
+            <v-text-field
+              v-model="phone"
+              :counter="11"
+              label="phone"
+              placeholder="+7(999)999-99-99"
+              required
+              @keyup.enter="login"
+            ></v-text-field>
+          </v-window-item>
+
+        </v-window>
+      </v-card-text>
+      <v-card-actions>
+        <div class="d-flex flex-column align-center w-100">
+          <v-btn width="152px" @click="login" color="primary" class="sign-in-button">Войти</v-btn>
+          <v-btn width="152px" @click="loginWithGoogle">войти через<v-icon class="ml-3" size="14" color="red">mdi-google</v-icon></v-btn>
+          <v-btn width="152px" variant="plain" to="/registration" flat>регистрация</v-btn>
+          <v-alert class="mt-5 w-100" v-if="isFailLogin" color="error">Не удалось залогиниться😭</v-alert>
+        </div>
+        <!-- <v-btn @click="loginWithEmail" color="primary" class="sign-in-button">Войти</v-btn> -->
+      </v-card-actions>
+    </v-card>
+  </div>
   <v-dialog transition="dialog-bottom-transition" v-model="isEnterCode">
     <v-card>
       <v-card-title>Введите код</v-card-title>
       <v-card-text>
         <v-otp-input
-          length="6"
-          @input="onCodeInput"
+          num-inputs="6"
+          @on-complete="handleOnComplete"
         ></v-otp-input>
       </v-card-text>
     </v-card>
@@ -60,21 +67,34 @@
 </template>
 
 <script>
-  import { inject, ref } from 'vue'
+  import { inject, ref, onMounted } from 'vue'
   import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
   import router from '@/router';
+  import VOtpInput from 'vue3-otp-input';
 
   export default {
+    name: 'login-component',
+    components: {
+      VOtpInput,
+    },
     setup () {
-      const phone = ref('+79042110468')
-      const password = ref('')
+      onMounted (() => {
+        console.log('sadfsdfd')
+      })
+
       const fbApp = inject('fbApp')
       let isFailLogin = ref(false)
 
+      function login () {
+        loginType.value === 'email' ? loginWithEmail() :loginWithPhone()
+      } 
+      
+      const email = ref('admin@mail.ru')
+      const password = ref('')
       function loginWithEmail () {
         isFailLogin.value = false
         const auth = getAuth(fbApp)
-        signInWithEmailAndPassword(auth, phone.value, password.value).then(res => {
+        signInWithEmailAndPassword(auth, email.value, password.value).then(res => {
           console.log(res)
           router.push('/')
         }).catch(err => {
@@ -98,10 +118,11 @@
         })
       }
 
+      const phone = ref('+79042110468')
       let isEnterCode = ref(false)
       function loginWithPhone () {
-        const auth = getAuth();
-        // fbApp.auth().useDeviceLanguage();
+        const auth = getAuth(fbApp);
+        auth.useDeviceLanguage();
         window.recaptchaVerifier = new RecaptchaVerifier('.sign-in-button', {
           'size': 'invisible',
           'callback': (response) => {
@@ -130,12 +151,23 @@
         // });
       }
 
-      function onCodeInput (e) {
-        console.log(e)
-        // if (e.length > )
-      }
+      const handleOnComplete = (value) => {
+        console.log('OTP completed: ', value);
+      };
 
-      return {loginWithEmail, loginWithGoogle, loginWithPhone, onCodeInput, phone, password, isFailLogin, isEnterCode}
+      const loginType = ref('phone')
+
+      return {loginWithGoogle, login, handleOnComplete, email, password, phone, isEnterCode, isFailLogin, loginType}
     }
   }
 </script>
+
+<style>
+.login-form {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>

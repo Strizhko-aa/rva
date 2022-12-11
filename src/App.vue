@@ -55,6 +55,7 @@ export default {
         store.dispatch('SET_VALUE', {key: 'user', value: user})
       } else {
         console.log('sign out')
+        router.push('/login')
         // User is signed out
       }
     })
@@ -64,7 +65,7 @@ export default {
       signOut(auth).then(() => {
         store.dispatch('SET_VALUE', {key: 'isAuthorized', value: false})
         store.dispatch('SET_VALUE', {key: 'user', value: {}})
-        router.push('/login')
+        // router.push('/login')
       })
     }
 
