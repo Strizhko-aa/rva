@@ -19,7 +19,8 @@ const firebaseConfig = {
   projectId: "rva-project-5d10c",
   storageBucket: "rva-project-5d10c.appspot.com",
   messagingSenderId: "825605662301",
-  appId: "1:825605662301:web:7c12ce82c3ae5903418fb4"
+  appId: "1:825605662301:web:7c12ce82c3ae5903418fb4",
+  databaseURL: 'https://rva-project-5d10c-default-rtdb.firebaseio.com'
 };
 
 // Initialize Firebase
