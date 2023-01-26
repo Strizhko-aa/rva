@@ -51,7 +51,7 @@
 
 <script setup>
 import { ref, onMounted, computed, defineEmits } from 'vue'
-import { getDatabase, ref as fireRef, set } from "firebase/database";
+import { getDatabase, ref as fireDbRef, set, push as fireDbPush } from "firebase/database";
 import { getStorage, ref as fireStoreRef, uploadBytes } from "firebase/storage";
 import { useStore } from 'vuex';
 import UploadFileVue from '../Utils/UploadFileVue.vue';
@@ -99,12 +99,14 @@ const storage = getStorage();
 const database = getDatabase();
 let carPhoto = ref({})
 async function createCar() {
-  let carUrl = `cars/${carNumber.value}_${carRegion.value}`;
+  // let carUrl = `cars/${carNumber.value}_${carRegion.value}`;
+  let carUrl = `cars`;
 
 	const photoExtension = carPhoto.value.name.split(".").splice(-1,1)[0]
-	let photoUrl = `${carUrl}/${carNumber.value}_${carRegion.value}__${makeid(5)}-${makeid(5)}.${photoExtension}`
+	let photoUrl = `${carUrl}/${carNumber.value}_${carRegion.value}/${carNumber.value}_${carRegion.value}__${makeid(5)}-${makeid(5)}.${photoExtension}`
 	let resPhoto = await uploadBytes(fireStoreRef(storage, photoUrl), carPhoto.value)
-	console.log('resPhoto', resPhoto)
+  let carRef = fireDbRef(database, carUrl)
+  let randomCarRef = fireDbPush(carRef)
 
 	let data = {
 		userUid: store.state.user.uid,
@@ -115,8 +117,10 @@ async function createCar() {
 		photos: [resPhoto.metadata.fullPath]
 	};
 
+
   try {
-		let resData = await set(fireRef(database, carUrl), data);
+		// let resData = await set(fireDbRef(database, carUrl), data);
+		let resData = await set(randomCarRef, data);
 		console.log(resData);
   }
   catch (error) {

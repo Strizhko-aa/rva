@@ -1,5 +1,21 @@
 <template>
   <div class="car-list-wrapper">
+    <NumberTemplate/>
+    <NumberTemplate :display-number="333" :display-region="222"/>
+    <v-dialog width="500px" v-model="isCreateCar">
+      <template v-slot:activator="{ props }">
+        <v-btn color="primary" v-bind="props">Добавить авто</v-btn>
+      </template>
+      <CreateCarVue @close-popup="isCreateCar = false"/>
+    </v-dialog>
+    <div class="search">
+      <v-text-field
+        v-model="search"
+        label="Номер"
+        :loading="loadingSearch"
+        @input="setSearch"
+      />
+    </div>
     <v-container fluid>
       <v-row>
         <v-col
@@ -28,74 +44,85 @@
         </v-col>
       </v-row>
     </v-container>
-    <v-dialog width="500px" v-model="isCreateCar">
-      <template v-slot:activator="{ props }">
-        <v-btn color="primary" v-bind="props">Добавить авто</v-btn>
-      </template>
-      <CreateCarVue @close-popup="isCreateCar = false"/>
-    </v-dialog>
-    <!-- <v-btn @click="getCars">get data</v-btn> -->
-    <v-btn @click="addTestData">add data</v-btn>
   </div>
 </template>
 
-<script>
-import { onMounted, ref as vueRef } from 'vue'
-import { getDatabase, ref, onValue, set } from "firebase/database";
+<script setup>
+import { ref as vueRef, watch, computed } from 'vue'
+import { getDatabase, ref, onValue, query, orderByChild, equalTo } from "firebase/database";
 import { getStorage, ref as fireStoreRef, getDownloadURL } from "firebase/storage";
 import CreateCarVue from './CreateCarVue.vue';
+import { useStore } from 'vuex';
+import NumberTemplate from '../Utils/NumberTemplate.vue';
 
-export default {
-    name: "car-list",
-    components: { CreateCarVue },
-    setup () {
-        let isCreateCar = vueRef(false);
-        const database = getDatabase();
-        console.log(database, 'carListVue')
-        let carRef = ref(database, "cars");
+let isCreateCar = vueRef(false);
+const database = getDatabase();
+let carRef = ref(database, "cars");
+const store = useStore();
 
-        onMounted(() => {
-          getCars();
-        });
+const isAuthorized = computed(() => {
+  return store.state.isAuthorized
+})
 
-        const storage = getStorage();
-        async function getCarUrl (car) {
-          let q = await getDownloadURL(fireStoreRef(storage, car.photos[0]))
-          car.img = q
-          console.log(q)
-          return q
-        }
+watch(isAuthorized, () => {
+  if (isAuthorized.value) {
+    getCars()
+  }
+})
 
+const storage = getStorage();
+async function getCarUrl (car) {
+  let q = await getDownloadURL(fireStoreRef(storage, car.photos[0]))
+  car.img = q
+  console.log(q)
+  return q
+}
 
-        function addTestData() {
-          set(carRef, {
-              Model: "XX999",
-              Mark: "BMW",
-              Number: 999,
-              Region: 888
-          });
-        }
-
-        let cars = vueRef([]);
-        function getCars() {
-          onValue(carRef, (snapshot) => {
-            let snapshotVal = snapshot.val();
-            console.log('snapshotVal', snapshotVal);
-            cars.value = Object.keys(snapshotVal).map((key) => {
-              return snapshotVal[key]
-            })
-            cars.value.forEach(element => {
-              getCarUrl(element)
-            });
-            // if (Array.isArray(snapshotVal)) {
-            //   cars.value = snapshotVal;
-            // }
-            // else {
-            //   cars.value.push(snapshotVal);
-            // }
-          })
-        }
-        return { addTestData, getCars, getCarUrl, cars, isCreateCar }
+let search = vueRef('')
+let loadingSearch = vueRef(false)
+function setSearch (e) {
+  if (e.target.value.length === 0) {
+    getCars()
+    return
+  }
+  if (e.target.value.length < 3) {
+    return
+  }
+  const queryRef = query(carRef, orderByChild('Number'), equalTo(e.target.value))
+  onValue(queryRef, snap => {
+    let snapshotVal = snap.val()
+    if (snapshotVal === null) {
+      cars.value = []
+      return
     }
+    cars.value = Object.keys(snapshotVal).map((key) => {
+      return snapshotVal[key]
+    })
+    cars.value.forEach(element => {
+      getCarUrl(element)
+    });
+  })
+}
+
+let cars = vueRef([]);
+function getCars() {
+  console.log('cars', cars)
+  onValue(carRef, (snapshot) => {
+    let snapshotVal = snapshot.val();
+    cars.value = Object.keys(snapshotVal).map((key) => {
+      return snapshotVal[key]
+    })
+    cars.value.forEach(element => {
+      getCarUrl(element)
+    });
+  }, {
+    // onlyOnce: true TODO добавить child_added, child_removed
+  })
 }
 </script>
+
+<style>
+.search {
+  width: 100px;
+}
+</style>
