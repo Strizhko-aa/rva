@@ -1,31 +1,51 @@
 <template>
   <div class="car-list-wrapper">
-    <NumberTemplate/>
-    <NumberTemplate :display-number="333" :display-region="222"/>
-    <v-dialog width="500px" v-model="isCreateCar">
-      <template v-slot:activator="{ props }">
-        <v-btn color="primary" v-bind="props">Добавить авто</v-btn>
-      </template>
-      <CreateCarVue @close-popup="isCreateCar = false"/>
-    </v-dialog>
-    <div class="search">
-      <v-text-field
-        v-model="search"
-        label="Номер"
-        :loading="loadingSearch"
-        @input="setSearch"
-      />
-    </div>
+    <v-container>
+      <div class="car-list-top">
+        <div class="car-list-top__search">
+          <v-tabs
+            v-model="searchBy"
+            direction="vertical"
+            bg-color="gray"
+            color="primary"
+          >
+            <v-tab value="one">Номер</v-tab>
+            <v-tab value="two">Регион</v-tab>
+          </v-tabs>
+          <v-window v-model="searchBy">
+            <v-window-item value="one">
+              <NumberTemplate @input-number="setSearch" @input-region="test" only-number/>
+            </v-window-item>
+            
+            <v-window-item value="two">
+              <NumberTemplate @input-number="setSearch" @input-region="test"/>
+            </v-window-item>
+          </v-window>
+        </div>
+        <v-dialog width="500px" v-model="isCreateCar">
+          <template v-slot:activator="{ props }">
+            <v-btn color="primary" v-bind="props">Добавить авто</v-btn>
+          </template>
+          <CreateCarVue @close-popup="isCreateCar = false"/>
+        </v-dialog>
+        <!-- <v-text-field
+          v-model="search"
+          label="Номер"
+          :loading="loadingSearch"
+          @input="setSearch"
+        /> -->
+      </div>
+    </v-container>
     <v-container fluid>
       <v-row>
         <v-col
           cols="3"
           class="mb-2"
           v-for="(car, carIndex) in cars" :key="carIndex"
-        >
+          >
           <v-card
             class="mx-auto"
-            max-width="344"
+            max-width="332"
             width="100%"
           >
               <v-img
@@ -35,7 +55,8 @@
                 cover
               ></v-img>
               <v-card-title>
-                {{ car.Number }}_{{ car.Region }}
+                <!-- {{ car.Number }}_{{ car.Region }} -->
+                <NumberTemplate :display-number="car.Number" :display-region="car.Region"/>
               </v-card-title>
               <v-card-subtitle>
                 {{ car.Mark }}, {{ car?.Model?.name }}
@@ -56,6 +77,7 @@ import { useStore } from 'vuex';
 import NumberTemplate from '../Utils/NumberTemplate.vue';
 
 let isCreateCar = vueRef(false);
+let searchBy = vueRef(0);
 const database = getDatabase();
 let carRef = ref(database, "cars");
 const store = useStore();
@@ -78,17 +100,22 @@ async function getCarUrl (car) {
   return q
 }
 
-let search = vueRef('')
-let loadingSearch = vueRef(false)
+function test (e) {
+  console.log(e)
+}
+
+// let search = vueRef('')
+// let loadingSearch = vueRef(false)
 function setSearch (e) {
-  if (e.target.value.length === 0) {
+  e = String(e)
+  if (e.length === 0) {
     getCars()
     return
   }
-  if (e.target.value.length < 3) {
+  if (e.length < 3) { // не ввели номер до конца
     return
   }
-  const queryRef = query(carRef, orderByChild('Number'), equalTo(e.target.value))
+  const queryRef = query(carRef, orderByChild('Number'), equalTo(e))
   onValue(queryRef, snap => {
     let snapshotVal = snap.val()
     if (snapshotVal === null) {
@@ -121,8 +148,15 @@ function getCars() {
 }
 </script>
 
-<style>
-.search {
-  width: 100px;
+<style lang="scss">
+.car-list-top {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  &__search {
+    display: flex;
+  }
 }
 </style>

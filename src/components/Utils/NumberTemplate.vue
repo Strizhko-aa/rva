@@ -1,9 +1,9 @@
 <template>
-  <div class="number ml-5">
+  <div class="number">
     <div class="number__left">
       Р<input type="number" class="number__number" :value="props.displayNumber || number" :readonly="readonly" @input="setNumber" placeholder="999">ВА
     </div>
-    <div class="number__right">
+    <div class="number__right" v-if="!props.onlyNumber">
       <div class="number__region">
         <input type="number" :value="props.displayRegion || region" :readonly="readonly" @input="setRegion" placeholder="136">
       </div>
@@ -18,10 +18,16 @@
   import { ref, defineEmits, defineProps, computed } from 'vue'
   let number = ref('')
   let region = ref('')
-  const emit = defineEmits(['input-number', 'input-region']) // TODO
+  const emit = defineEmits(['input-number', 'input-region'])
   const props = defineProps({
-    displayNumber: Number,
-    displayRegion: Number
+    displayNumber: {
+      type: String
+    },
+    displayRegion: String,
+    onlyNumber: {
+      type: Boolean,
+      default: false
+    }
   })
 
   let readonly = computed(() => {
